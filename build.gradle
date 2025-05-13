@@ -1,0 +1,57 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
+}
+
+group = 'fragrant.doublestronghold'
+version = '1.0'
+
+repositories {
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
+    maven { url 'https://maven.seedfinding.com' }
+    maven { url 'https://repo.jellejurre.dev' }
+}
+
+dependencies {
+    implementation 'com.formdev:flatlaf:3.5.2'
+    implementation 'com.formdev:flatlaf-extras:3.5.2'
+
+    implementation ('it.unimi.dsi:fastutil-core:8.5.13'){ transitive = false }
+
+    implementation('com.seedfinding:mc_math:1.171.0'){ transitive = false }
+    implementation('com.seedfinding:mc_seed:1.171.1'){ transitive = false }
+    implementation('com.seedfinding:mc_core:1.200.0'){ transitive = false }
+    implementation('com.seedfinding:mc_noise:1.171.1'){ transitive = false }
+    implementation('com.seedfinding:mc_biome:1.171.1'){ transitive = false }
+    implementation ('com.github.mjtb49:SeedUtils:512bf3878057493457d534071277d58426a67b5a')
+    implementation ('com.github.KaptainWutax:BiomeUtils:69d9a7644e5477344379e451cdbdd036596ca88c') {transitive = false}
+
+    implementation('com.github.KalleStruik:noise-sampler:1.20.0'){ transitive = false }
+    implementation files('libs/biomesampler-1.20.0.jar')
+
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+application {
+    mainClass = 'fragrant.doublestronghold.Main'
+}
+
+shadowJar {
+    manifest {
+        attributes 'Main-Class': application.mainClass
+    }
+    mergeServiceFiles()
+
+    exclude 'META-INF/*.SF'
+    exclude 'META-INF/*.DSA'
+    exclude 'META-INF/*.RSA'
+
+    archiveFileName = "DoubleStrongholdFinder-${version}.jar"
+}
+
+test {
+    useJUnitPlatform()
+}
