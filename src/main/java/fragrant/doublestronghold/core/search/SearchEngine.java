@@ -33,47 +33,38 @@ public class SearchEngine {
         this.searcher = searcher;
     }
 
-    public void search(long startSeed, long endSeed, SearchParameters params) {
-        try {
-            long processed = 0;
-            for (long currentSeed = startSeed; currentSeed <= endSeed && isSearching.get(); currentSeed += BATCH_SIZE) {
-                long batchEnd = Math.min(currentSeed + BATCH_SIZE - 1, endSeed);
-                for (long seed = currentSeed; seed <= batchEnd && isSearching.get(); seed++) {
-                    boolean found = searcher.check(seed, params);
-                    if (found) {
-                        PortalRoomInfo[] portals = searcher.getPortalInfo(seed, params);
-                        if (portals != null && portals.length == 2) {
-                            save(seed, portals[0], portals[1]);
-                            resultsFound.incrementAndGet();
-                        }
-                    }
-                    processed++;
-                    if (processed % UPDATE_INTERVAL == 0) {
-                        seedsProcessed.addAndGet(UPDATE_INTERVAL);
-                        currentStartSeed.set(seed + 1);
-                    }
-                }
-            }
-            long remaining = processed % UPDATE_INTERVAL;
-            if (remaining > 0) {
-                seedsProcessed.addAndGet(remaining);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void searchSequential(long startSeed, long endSeed, SearchParameters params, int threadCount) {
+    public void searchSequential(long startSeed, long endSeed, SearchParameters params) {
         nextSeed.compareAndSet(0, startSeed);
         try {
             while (isSearching.get()) {
                 long currentSeed = nextSeed.getAndAdd(BATCH_SIZE);
-                if (currentSeed > endSeed) break;
 
-                long batchEnd = Math.min(currentSeed + BATCH_SIZE - 1, endSeed);
+                if (startSeed <= endSeed) {
+                    if (currentSeed > endSeed) break;
+                } else {
+                    if (currentSeed > endSeed && currentSeed < startSeed) break;
+                }
+
+                long batchEnd;
+                if (startSeed <= endSeed) {
+                    batchEnd = Math.min(currentSeed + BATCH_SIZE - 1, endSeed);
+                } else {
+                    if (currentSeed + BATCH_SIZE - 1 < currentSeed) {
+                        batchEnd = Long.MAX_VALUE;
+                    } else {
+                        batchEnd = Math.min(currentSeed + BATCH_SIZE - 1, endSeed);
+                    }
+                }
+
                 long processed = 0;
 
-                for (long seed = currentSeed; seed <= batchEnd && isSearching.get(); seed++) {
+                for (long seed = currentSeed; isSearching.get(); seed++) {
+                    if (startSeed <= endSeed) {
+                        if (seed > batchEnd) break;
+                    } else {
+                        if (seed > batchEnd && seed < startSeed) break;
+                    }
+
                     boolean found = searcher.check(seed, params);
                     if (found) {
                         PortalRoomInfo[] portals = searcher.getPortalInfo(seed, params);

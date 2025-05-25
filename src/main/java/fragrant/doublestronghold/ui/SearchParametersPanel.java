@@ -5,6 +5,7 @@ import java.awt.*;
 
 public class SearchParametersPanel extends JPanel {
     private final JTextField startSeedField;
+    private final JTextField endSeedField;
     private final JSpinner threadCountSpinner;
     private final JTextField centerXField;
     private final JTextField centerZField;
@@ -21,13 +22,20 @@ public class SearchParametersPanel extends JPanel {
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         gbc.gridx = 0; gbc.gridy = 0;
-        add(new JLabel("Seed"), gbc);
+        add(new JLabel("Start Seed"), gbc);
 
         gbc.gridx = 1; gbc.weightx = 1.0;
-        startSeedField = new JTextField("0");
+        startSeedField = new JTextField(String.valueOf(Long.MIN_VALUE));
         add(startSeedField, gbc);
 
         gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0;
+        add(new JLabel("End Seed"), gbc);
+
+        gbc.gridx = 1; gbc.weightx = 1.0;
+        endSeedField = new JTextField(String.valueOf(Long.MAX_VALUE));
+        add(endSeedField, gbc);
+
+        gbc.gridx = 0; gbc.gridy = 2; gbc.weightx = 0;
         add(new JLabel("Thread"), gbc);
 
         gbc.gridx = 1; gbc.weightx = 1.0;
@@ -40,35 +48,36 @@ public class SearchParametersPanel extends JPanel {
         JFormattedTextField textField = ((JSpinner.DefaultEditor) editor).getTextField();
         textField.setColumns(3);
         add(threadCountSpinner, gbc);
-        gbc.gridx = 0; gbc.gridy = 2; gbc.weightx = 0;
+
+        gbc.gridx = 0; gbc.gridy = 3; gbc.weightx = 0;
         add(new JLabel("Center X"), gbc);
 
         gbc.gridx = 1; gbc.weightx = 1.0;
         centerXField = createTextFieldWithUnit("0", "blocks");
         add(centerXField, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 3; gbc.weightx = 0;
+        gbc.gridx = 0; gbc.gridy = 4; gbc.weightx = 0;
         add(new JLabel("Center Z"), gbc);
 
         gbc.gridx = 1; gbc.weightx = 1.0;
         centerZField = createTextFieldWithUnit("0", "blocks");
         add(centerZField, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 4; gbc.weightx = 0;
+        gbc.gridx = 0; gbc.gridy = 5; gbc.weightx = 0;
         add(new JLabel("Radius"), gbc);
 
         gbc.gridx = 1; gbc.weightx = 1.0;
         searchRadiusField = createTextFieldWithUnit("1500", "blocks");
         add(searchRadiusField, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 5; gbc.weightx = 0;
+        gbc.gridx = 0; gbc.gridy = 6; gbc.weightx = 0;
         add(new JLabel("Stronghold Distance"), gbc);
 
         gbc.gridx = 1; gbc.weightx = 1.0;
         maxStrongholdDistanceField = createTextFieldWithUnit("32", "blocks");
         add(maxStrongholdDistanceField, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 6; gbc.weightx = 0;
+        gbc.gridx = 0; gbc.gridy = 7; gbc.weightx = 0;
         add(new JLabel("Portal Distance"), gbc);
 
         gbc.gridx = 1; gbc.weightx = 1.0;
@@ -107,10 +116,20 @@ public class SearchParametersPanel extends JPanel {
         return field;
     }
 
-
-
     public long getStartSeed() {
-        return Long.parseLong(startSeedField.getText());
+        String text = startSeedField.getText().trim();
+        if (text.isEmpty()) {
+            return Long.MIN_VALUE;
+        }
+        return Long.parseLong(text);
+    }
+
+    public long getEndSeed() {
+        String text = endSeedField.getText().trim();
+        if (text.isEmpty()) {
+            return Long.MAX_VALUE;
+        }
+        return Long.parseLong(text);
     }
 
     public int getThreadCount() {

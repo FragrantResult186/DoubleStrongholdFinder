@@ -82,13 +82,20 @@ public class Main extends JFrame {
         resultsTable.getColumnModel().getColumn(1).setPreferredWidth(300);
 
         JPopupMenu popupMenu = new JPopupMenu();
-        JMenuItem copyItem = new JMenuItem("Copy");
+        JMenuItem copySeedsItem = new JMenuItem("Copy Seeds");
+        JMenuItem copyCommandsItem = new JMenuItem("Copy Commands");
+        JMenuItem copyAllItem = new JMenuItem("Copy All");
         JMenuItem deleteItem = new JMenuItem("Delete");
 
-        copyItem.addActionListener(e -> copySelectedRows());
+        copySeedsItem.addActionListener(e -> copySelectedSeeds());
+        copyCommandsItem.addActionListener(e -> copySelectedCommands());
+        copyAllItem.addActionListener(e -> copySelectedRows());
         deleteItem.addActionListener(e -> deleteSelectedRows());
 
-        popupMenu.add(copyItem);
+        popupMenu.add(copySeedsItem);
+        popupMenu.add(copyCommandsItem);
+        popupMenu.add(copyAllItem);
+        popupMenu.addSeparator();
         popupMenu.add(deleteItem);
 
         resultsTable.addMouseListener(new MouseAdapter() {
@@ -137,6 +144,34 @@ public class Main extends JFrame {
         add(southPanel, BorderLayout.CENTER);
     }
 
+    private void copySelectedSeeds() {
+        int[] selectedRows = resultsTable.getSelectedRows();
+        if (selectedRows.length == 0) return;
+
+        StringBuilder sb = new StringBuilder();
+        for (int row : selectedRows) {
+            String seed = (String) tableModel.getValueAt(row, 0);
+            sb.append(seed).append("\n");
+        }
+
+        StringSelection selection = new StringSelection(sb.toString().trim());
+        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(selection, null);
+    }
+
+    private void copySelectedCommands() {
+        int[] selectedRows = resultsTable.getSelectedRows();
+        if (selectedRows.length == 0) return;
+
+        StringBuilder sb = new StringBuilder();
+        for (int row : selectedRows) {
+            String command = (String) tableModel.getValueAt(row, 1);
+            sb.append(command).append("\n");
+        }
+
+        StringSelection selection = new StringSelection(sb.toString().trim());
+        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(selection, null);
+    }
+
     private void copySelectedRows() {
         int[] selectedRows = resultsTable.getSelectedRows();
         if (selectedRows.length == 0) return;
@@ -166,6 +201,7 @@ public class Main extends JFrame {
 
         try {
             long startSeed = parametersPanel.getStartSeed();
+            long endSeed = parametersPanel.getEndSeed();
             int threadCount = parametersPanel.getThreadCount();
             int centerX = parametersPanel.getCenterX();
             int centerZ = parametersPanel.getCenterZ();
@@ -173,14 +209,14 @@ public class Main extends JFrame {
             double maxStrongholdDistance = parametersPanel.getMaxStrongholdDistance();
             double maxPortalDistance = parametersPanel.getMaxPortalDistance();
 
-            if (startSeed < 0 || startSeed >= (1L << 32)) {
-                JOptionPane.showMessageDialog(this, "Seed must be between 0 and 2^32-1",
+            if (threadCount <= 0 || searchRadius <= 0 || maxStrongholdDistance <= 0 || maxPortalDistance <= 0) {
+                JOptionPane.showMessageDialog(this, "All numeric values must be positive",
                         "Invalid Input", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
-            if (threadCount <= 0 || searchRadius <= 0 || maxStrongholdDistance <= 0 || maxPortalDistance <= 0) {
-                JOptionPane.showMessageDialog(this, "All numeric values must be positive",
+            if (startSeed == endSeed) {
+                JOptionPane.showMessageDialog(this, "Start seed and end seed cannot be the same",
                         "Invalid Input", JOptionPane.ERROR_MESSAGE);
                 return;
             }
@@ -205,10 +241,9 @@ public class Main extends JFrame {
             uiUpdateExecutor = Executors.newSingleThreadScheduledExecutor();
             startSeedUpdateExecutor = Executors.newSingleThreadScheduledExecutor();
 
-            long maxSeed = (1L << 32) - 1;
             startProgressUpdates();
             for (int i = 0; i < threadCount; i++) {
-                executor.submit(() -> searchEngine.searchSequential(startSeed, maxSeed, params, threadCount));
+                executor.submit(() -> searchEngine.searchSequential(startSeed, endSeed, params));
             }
             monitorSearchCompletion();
         } catch (NumberFormatException e) {
